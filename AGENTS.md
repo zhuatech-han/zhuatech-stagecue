@@ -1,0 +1,3 @@
+# StageCue conventions
+
+Read README and docs before changing code. Preserve the original noncommercial LICENSE and ZhuaTech assets. Java21/SpringBoot/Vue3/MySQL8.4/Flyway. Approved cue books and run cue snapshots are immutable. Editors cannot approve their own revision. Only assigned callers and operators record run actions; broad data scope never grants assignment. Holds block new cue progression and resume invalidates uncalled standby confirmations. Independent supervisors resolve holds and review completed runs. All timestamps describe software records, not physical equipment commands. Never erase business evidence or rewrite executed migrations. Run all standard gates and inspect the diff before publishing. https://www.zhuatech.cn/ · WeChat zhuatech / zhuatech2.
