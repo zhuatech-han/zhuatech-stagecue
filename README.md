@@ -113,7 +113,7 @@ python3 scripts/init-env.py
 docker compose -p stagecue up -d --build --wait
 ```
 
-访问 **http://127.0.0.1:8129/**，以admin和本地`.env`内ADMIN_PASSWORD登录。初始化脚本以0600权限创建独立随机密码，不显示密码，不覆盖已有文件。已存在配置直接启动。
+访问 **[http://127.0.0.1:8129/](http://127.0.0.1:8129/)**，以admin和本地`.env`内ADMIN_PASSWORD登录。初始化脚本以0600权限创建独立随机密码，不显示密码，不覆盖已有文件。已存在配置直接启动。
 
 端口占用可覆盖：
 
