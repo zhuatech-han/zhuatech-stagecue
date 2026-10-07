@@ -1,3 +1,5 @@
+[中文](README.md) | [English](README.en.md)
+
 <div align="center">
 <img src="frontend/public/brand/logo.jpg" alt="知华科技 LOGO" width="170" />
 
@@ -11,6 +13,8 @@
 </div>
 
 ## 提示本、岗位确认与场次记录
+
+系统采用 Java 21／Spring Boot、Vue 3、MySQL 和 Flyway，提供舞台提示版本审批、岗位指派与执行证据管理。
 
 StageCue 面向剧场、演出制作和排练团队，管理提示本版次、指定岗位、顺序执行和场次复盘。一条提示保存类型、编号、顺序、台词或动作标记、执行说明及是否允许略过。已批准版次冻结，每场复制自己的提示快照；改版不会悄悄改写正在执行的场次。
 
@@ -51,19 +55,33 @@ StageCue 面向剧场、演出制作和排练团队，管理提示本版次、�
 | --- | --- |
 | ![登录](docs/screenshots/login.jpg) | ![操作员工作台](docs/screenshots/operator-home.jpg) |
 
+登录：会话认证进入工作空间。操作员工作台：查看本人被指派的场次与提示。
+
 | 提示本版次 | 场次执行 |
 | --- | --- |
 | ![提示本版次](docs/screenshots/book.jpg) | ![场次执行](docs/screenshots/run.jpg) |
+
+提示本版次：维护有序提示与独立审批。场次执行：查看冻结快照，按指定岗位记录顺序执行。
 
 | 账号管理 | 角色与权限 |
 | --- | --- |
 | ![账号管理](docs/screenshots/users.jpg) | ![角色与权限](docs/screenshots/roles.jpg) |
 
+账号管理：维护账号启用、部门和岗位。角色与权限：配置接口权限与数据范围。
+
 | 场次统计 | 系统参数 |
 | --- | --- |
 | ![场次统计](docs/screenshots/dashboard.jpg) | ![系统参数](docs/screenshots/settings.jpg) |
 
-[手机页面](docs/screenshots/mobile.jpg) · [英文页面](docs/screenshots/english.jpg)
+场次统计：查看授权范围内的场次状态与提示数量。系统参数：维护允许调整的名称与容量设置。
+
+![手机页面](docs/screenshots/mobile.jpg)
+
+手机页面：在窄屏布局中查看提示台账。
+
+![英文页面](docs/screenshots/english.jpg)
+
+英文页面：使用英文操作界面。
 
 ## 状态与约束
 
@@ -106,10 +124,11 @@ compose.yaml                               三服务和MySQL持久卷
 
 ### Docker Compose
 
-要求Docker Desktop／Docker Engine和Compose v2，具备拉取官方镜像及公开依赖的网络。
+要求 Docker Desktop／Docker Engine、Compose v2 和 Python 3，具备拉取官方镜像及公开依赖的网络。
 
 ```sh
 python3 scripts/init-env.py
+docker compose -p stagecue config --quiet
 docker compose -p stagecue up -d --build --wait
 ```
 
@@ -129,6 +148,11 @@ Java21／Maven3.9与Node24.19.0以上版本，MySQL8.4可用。为本地后端�
 
 ```sh
 mvn -B -f backend/pom.xml spring-boot:run
+```
+
+另一个终端，在项目根目录启动前端：
+
+```sh
 cd frontend
 npm ci
 npm run dev
@@ -148,7 +172,7 @@ npm run dev
 | COOKIE_SECURE | 本机HTTP为false；HTTPS生产设为true |
 | DATABASE_URL／DATABASE_USER／DATABASE_CATALOG | 源码运行或外部数据库覆盖，容器默认无需填写 |
 
-健康入口`/actuator/health`只暴露健康状态。MySQL卷保留重启后的数据；备份恢复、生产HTTPS和升级步骤见[部署说明](docs/部署说明.md)。不要删除实际业务卷或改写已执行迁移。
+健康入口 [http://127.0.0.1:8129/actuator/health](http://127.0.0.1:8129/actuator/health) 只暴露健康状态，正常响应包含 `"status":"UP"`。MySQL卷保留重启后的数据；备份恢复、生产HTTPS和升级步骤见[部署说明](docs/部署说明.md)。不要删除实际业务卷或改写已执行迁移。
 
 ## 验证与边界
 
@@ -166,7 +190,7 @@ git diff --check
 python3 scripts/release-check.py
 ```
 
-后端41项（35 HTTP/JPA＋6时间精度与范围），前端10项。覆盖完整业务、独立审批、旧版快照、指派、收悉、顺序、暂停恢复、中止、幂等、并发、范围、实时停用、CSRF及最后管理员保护。Docker Maven构建执行全部测试。实际MySQL验收和持久化检查：
+后端41项（35 HTTP/JPA＋6时间精度与范围），前端10项。覆盖完整业务、独立审批、旧版快照、指派、收悉、顺序、暂停恢复、中止、幂等、并发、范围、实时停用、CSRF及最后管理员保护。集成测试使用独立 H2 和动态生成的随机密码，不能替代真实 MySQL 验收。Docker Maven构建执行全部测试。实际MySQL验收和持久化检查：
 
 ```sh
 # 仅可销毁的本项目独立测试库，写入TEST业务及随机账号。
@@ -193,6 +217,18 @@ python3 scripts/smoke.py --verify
 | 修改ADMIN_PASSWORD旧库无变化 | 变量仅初始化，使用本人改密码或管理员重置 |
 | 迁移校验失败 | 按可信新增迁移升级，不改写历史或删除实际卷 |
 
+## 部署、升级与备份恢复
+
+升级前暂停业务写入，保留应用镜像版本，并在仓库外的受控目录以 0600 权限保存完整数据库备份。备份包含密码散列与未发布演出资料，不得提交公开仓库。使用新增 Flyway 迁移，不能改写已执行 V1／V2；JPA 只校验结构。
+
+在另一个 Compose 项目、独立数据库卷和不同端口中，先启动 MySQL 并导入备份，再启动对应版本的后端和前端，核对迁移、账号登录、版次摘要、场次快照、岗位、执行与暂停记录，并运行 `scripts/smoke.py --verify` 比对私有验收快照。外网部署需 HTTPS、`COOKIE_SECURE=true`、可信反向代理、网络隔离、最小权限与备份监控；详细步骤见[部署与恢复](docs/部署说明.md)。
+
+`docker compose -p stagecue stop` 保留数据；`down` 删除本项目容器与网络，保留卷。只有明确可丢弃的测试环境才删除数据库卷。
+
+## 授权说明
+
+自有代码采用 [ZhuaTech Non-Commercial Source License 1.0](LICENSE)，仅限个人学习、技术研究与非商业交流。未经上海如静知华信息科技有限公司书面授权不得商用；企业私有化部署、收费交付与服务、源码转售及深度定制须另行取得书面授权。保留署名、官网、版权、许可证和授权联系方式。这是“源码公开、非商业使用”，并非 OSI 标准开源许可。第三方依赖保留各自授权，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。软件按现状提供，不宣称未经验证的生产可用性。
+
 ## 操作与反馈
 
 流程见[操作手册](docs/操作手册.md)，请求及错误见[接口说明](docs/接口说明.md)。贡献规则和脱敏反馈见[CONTRIBUTING.md](CONTRIBUTING.md)；安全问题通过官网和微信私下联系，不在公开Issue上传凭证、个人数据或未发布演出资料。
@@ -207,3 +243,5 @@ python3 scripts/smoke.py --verify
 | 微信 zhuatech | 微信 zhuatech2 |
 | --- | --- |
 | ![微信 zhuatech](docs/images/wechat-zhuatech.png) | ![微信 zhuatech2](docs/images/wechat-zhuatech2.png) |
+
+商业授权或深度定制开发请联系知华科技。
